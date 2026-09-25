@@ -16,30 +16,38 @@ defineProps<{
 </script>
 
 <template>
-  <section class="card">
-    <h2>{{ employee.name }}</h2>
-
-    <p class="designation">{{ employee.designation }}</p>
-
-    <div class="details">
-      <p><strong>Department:</strong> {{ employee.department }}</p>
-      <p><strong>Experience:</strong> {{ employee.experience }} Years</p>
-
-      <p>
-        <strong>Status:</strong>
-
-        <span class="status" :class="employee.status ? 'active' : 'inactive'">
-          {{ employee.status ? 'Active' : 'Inactive' }}
-        </span>
-      </p>
+  <div class="employee-card-wrapper">
+    <div class="employee-card">
+      <h2 class="employee-name">{{ employee.name }}</h2>
+      <p class="employee-role">{{ employee.role }}</p>
+      <div class="info-section">
+        <p class="info-row">
+          <span class="info-label">Designation:</span>
+          <span class="info-value">{{ employee.designation }}</span>
+        </p>
+        <p class="info-row">
+          <span class="info-label">Department:</span>
+          <span class="info-value">{{ employee.department }}</span>
+        </p>
+        <p class="info-row">
+          <span class="info-label">Experience:</span>
+          <span class="info-value">{{ employee.experience }}</span>
+        </p>
+        <p class="info-row">
+          <span class="info-label">Status:</span>
+          <span class="status" :class="employee.status ? 'active' : 'inactive'">
+            {{ employee.status ? 'Active' : 'Inactive' }}
+          </span>
+        </p>
+      </div>
+      <div class="skills-section">
+        <h3 class="skills-title">Skills</h3>
+        <div class="skills-list">
+          <SkillBadge v-for="skill in employee.skills" :key="skill" :skill="skill" />
+        </div>
+      </div>
     </div>
-
-    <h3>Skills</h3>
-
-    <div class="skills">
-      <SkillBadge v-for="skill in employee.skills" :key="skill" :skill="skill" />
-    </div>
-  </section>
+  </div>
 </template>
 
 <style scoped>
