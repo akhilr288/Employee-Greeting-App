@@ -12,11 +12,10 @@ defineProps<{
 
 <style scoped>
 .badge {
-  background: #e8fff5;
-  color: #176b4d;
-  padding: 8px 14px;
+  background: #dcfce7;
+  color: #166534;
+  padding: 6px 12px;
   border-radius: 20px;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 13px;
 }
 </style>
