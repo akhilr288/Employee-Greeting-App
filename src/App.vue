@@ -1,66 +1,62 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import EmployeeCard from './components/EmployeeCard.vue'
-import DepartmentFilter from './components/DepartmentFilter.vue'
-import type { Employee } from './types/employee'
+import ProductList from './components/ProductList.vue'
+import ShoppingCart from './components/ShoppingCart.vue'
+import { products, cartItems } from './constants/productdata'
+import type { CartItem, Product } from './types/product'
 
-const selectedDepartment = ref('All')
+const cart = ref<CartItem[]>(cartItems)
 
-const employees = ref<Employee[]>([
-  {
-    id: 1,
-    name: 'Akhil R',
-    designation: 'Software Engineer',
-    department: 'Engineering',
-    experience: 12,
-    skills: ['Vue.js', 'React', 'Angular', 'TypeScript', 'Laravel', 'Tailwind CSS'],
-    status: true,
-  },
-  {
-    id: 2,
-    name: 'Abhilash',
-    designation: 'UI/UX Designer',
-    department: 'Design',
-    experience: 10,
-    status: true,
-    skills: ['Figma', 'Adobe XD', 'Illustrator'],
-  },
-  {
-    id: 3,
-    name: 'Nithin S',
-    designation: 'Backend Developer',
-    department: 'Engineering',
-    experience: 7,
-    status: false,
-    skills: ['Laravel', 'MySQL', 'Redis'],
-  },
-  {
-    id: 4,
-    name: 'Asha',
-    designation: 'QA Engineer',
-    department: 'QA',
-    experience: 2,
-    status: true,
-    skills: ['Cypress', 'Vitest', 'Playwright'],
-  },
-])
-
-const departments = ['All', 'Engineering', 'Design', 'QA']
-
-const filteredEmployees = computed(() => {
-  if (selectedDepartment.value === 'All') {
-    return employees.value
+function addToCart(product: Product) {
+  const existingItem = cart.value.find((item) => item.id === product.id)
+  if (existingItem) {
+    existingItem.quantity++
+    return
   }
-  return employees.value.filter((employee) => employee.department === selectedDepartment.value)
+
+  cart.value.push({
+    id: product.id,
+    name: product.name,
+    price: product.price,
+    quantity: 1,
+  })
+}
+
+function increaseQuantity(item: CartItem) {
+  item.quantity++
+}
+
+function decreaseQuantity(item: CartItem) {
+  if (item.quantity > 1) {
+    item.quantity--
+  }
+}
+
+function removeFromCart(productId: number) {
+  cart.value = cart.value.filter((item) => item.id !== productId)
+}
+
+const cartTotal = computed(() => {
+  return cart.value.reduce((total, item) => total + item.price * item.quantity, 0)
 })
 </script>
 
 <template>
   <main class="container">
-    <h1>Employee Directory</h1>
-    <DepartmentFilter :departments="departments" v-model="selectedDepartment" />
-    <div class="employee-grid">
-      <EmployeeCard v-for="employee in filteredEmployees" :key="employee.id" :employee="employee" />
+    <header class="page-header">
+      <h1>Shopping Cart</h1>
+    </header>
+
+    <div class="shop-layout">
+      <ProductList :products="products" @add-to-cart="addToCart" />
+
+      <ShoppingCart
+        :cart="cart"
+        :total="cartTotal"
+        @increase="increaseQuantity"
+        @decrease="decreaseQuantity"
+        @remove="removeFromCart"
+      />
     </div>
   </main>
 </template>

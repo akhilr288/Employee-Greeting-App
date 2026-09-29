@@ -1,0 +1,18 @@
+export interface Product {
+  id: number
+  name: string
+  description: string
+  price: number
+  category: string
+  imageUrl: string
+  stock: number
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface CartItem {
+  id: number
+  name: string
+  price: number
+  quantity: number
+}
