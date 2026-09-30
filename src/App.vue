@@ -1,63 +1,89 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import ProductList from './components/ProductList.vue'
-import ShoppingCart from './components/ShoppingCart.vue'
-import { products, cartItems } from './constants/productdata'
-import type { CartItem, Product } from './types/product'
+import ExpenseForm from './components/ExpenseForm.vue'
+import ExpenseList from './components/ExpenseList.vue'
+import type { Expense } from './types/expense'
 
-const cart = ref<CartItem[]>(cartItems)
+const expenses = ref<Expense[]>([])
 
-function addToCart(product: Product) {
-  const existingItem = cart.value.find((item) => item.id === product.id)
-  if (existingItem) {
-    existingItem.quantity++
+function addExpense(expenseForm: Omit<Expense, 'id' | 'date'> & { date: string }) {
+  if (
+    !expenseForm.title.trim() ||
+    !expenseForm.category ||
+    expenseForm.amount <= 0 ||
+    !expenseForm.date
+  ) {
     return
   }
 
-  cart.value.push({
-    id: product.id,
-    name: product.name,
-    price: product.price,
-    quantity: 1,
-  })
-}
-
-function increaseQuantity(item: CartItem) {
-  item.quantity++
-}
-
-function decreaseQuantity(item: CartItem) {
-  if (item.quantity > 1) {
-    item.quantity--
+  const expense: Expense = {
+    id: Date.now(),
+    title: expenseForm.title,
+    category: expenseForm.category,
+    amount: expenseForm.amount,
+    date: new Date(`${expenseForm.date}T00:00:00`),
   }
-}
 
-function removeFromCart(productId: number) {
-  cart.value = cart.value.filter((item) => item.id !== productId)
+  expenses.value.push(expense)
 }
+function deleteExpense(id: number) {
+  expenses.value = expenses.value.filter((expense) => expense.id !== id)
+}
+const totalExpense = computed(() => {
+  return expenses.value.reduce((total, expense) => total + expense.amount, 0)
+})
+const categoryTotals = computed(() => {
+  const totals: Record<string, number> = {}
 
-const cartTotal = computed(() => {
-  return cart.value.reduce((total, item) => total + item.price * item.quantity, 0)
+  for (const expense of expenses.value) {
+    if (!totals[expense.category]) {
+      totals[expense.category] = 0
+    }
+
+    totals[expense.category] = (totals[expense.category] ?? 0) + expense.amount
+  }
+
+  return totals
 })
 </script>
 
 <template>
   <main class="container">
     <header class="page-header">
-      <h1>Shopping Cart</h1>
+      <h1>Expense Tracker</h1>
     </header>
+    <ExpenseForm @submit="addExpense" />
+    <section class="summary-grid">
+      <div class="summary-card">
+        <span>Total Expenses</span>
 
-    <div class="shop-layout">
-      <ProductList :products="products" @add-to-cart="addToCart" />
+        <strong> ₹{{ totalExpense.toFixed(2) }} </strong>
+      </div>
 
-      <ShoppingCart
-        :cart="cart"
-        :total="cartTotal"
-        @increase="increaseQuantity"
-        @decrease="decreaseQuantity"
-        @remove="removeFromCart"
-      />
-    </div>
+      <div class="summary-card">
+        <span>Number of Expenses</span>
+
+        <strong>
+          {{ expenses.length }}
+        </strong>
+      </div>
+    </section>
+    <section class="category-section card">
+      <h2>Category Summary</h2>
+
+      <div v-if="Object.keys(categoryTotals).length === 0" class="empty-state">
+        No category data yet.
+      </div>
+
+      <div v-else class="category-grid">
+        <div v-for="(amount, category) in categoryTotals" :key="category" class="category-card">
+          <span>{{ category }}</span>
+
+          <strong> ₹{{ amount.toFixed(2) }} </strong>
+        </div>
+      </div>
+    </section>
+    <ExpenseList :expenses="expenses" @delete="deleteExpense" />
   </main>
 </template>
 
@@ -71,11 +97,5 @@ const cartTotal = computed(() => {
 h1 {
   text-align: center;
   color: #42b883;
-}
-
-.employee-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 20px;
 }
 </style>
