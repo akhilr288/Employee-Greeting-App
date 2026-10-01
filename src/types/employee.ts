@@ -6,4 +6,9 @@ export interface Employee {
   experience: number
   status: boolean
   skills: string[]
+  basicSalary: number
+  hra: number
+  da: number
+  bonus: number
+  tax: number
 }

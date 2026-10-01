@@ -1,89 +1,94 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import ExpenseForm from './components/ExpenseForm.vue'
-import ExpenseList from './components/ExpenseList.vue'
-import type { Expense } from './types/expense'
+import EmployeeList from './components/EmployeeList.vue'
+import SalarySummary from './components/SalarySummary.vue'
+import { employees } from './constants/employeeData'
 
-const expenses = ref<Expense[]>([])
+const salaryFilter = ref('all')
+const employeesWithSalary = computed(() => {
+  return employees.map((employee) => {
+    const grossSalary = employee.basicSalary + employee.hra + employee.da + employee.bonus
 
-function addExpense(expenseForm: Omit<Expense, 'id' | 'date'> & { date: string }) {
-  if (
-    !expenseForm.title.trim() ||
-    !expenseForm.category ||
-    expenseForm.amount <= 0 ||
-    !expenseForm.date
-  ) {
-    return
-  }
+    const taxAmount = grossSalary * (employee.tax / 100)
 
-  const expense: Expense = {
-    id: Date.now(),
-    title: expenseForm.title,
-    category: expenseForm.category,
-    amount: expenseForm.amount,
-    date: new Date(`${expenseForm.date}T00:00:00`),
-  }
+    const netSalary = grossSalary - taxAmount
 
-  expenses.value.push(expense)
-}
-function deleteExpense(id: number) {
-  expenses.value = expenses.value.filter((expense) => expense.id !== id)
-}
-const totalExpense = computed(() => {
-  return expenses.value.reduce((total, expense) => total + expense.amount, 0)
-})
-const categoryTotals = computed(() => {
-  const totals: Record<string, number> = {}
-
-  for (const expense of expenses.value) {
-    if (!totals[expense.category]) {
-      totals[expense.category] = 0
+    return {
+      ...employee,
+      grossSalary,
+      taxAmount,
+      netSalary,
     }
+  })
+})
+const filteredEmployees = computed(() => {
+  const data = employeesWithSalary.value
 
-    totals[expense.category] = (totals[expense.category] ?? 0) + expense.amount
+  if (salaryFilter.value === 'below50000') {
+    return data.filter((employee) => employee.netSalary < 50000)
   }
 
-  return totals
+  if (salaryFilter.value === '50000to75000') {
+    return data.filter((employee) => employee.netSalary >= 50000 && employee.netSalary <= 75000)
+  }
+
+  if (salaryFilter.value === 'above75000') {
+    return data.filter((employee) => employee.netSalary > 75000)
+  }
+
+  return data
+})
+
+const highestSalary = computed(() => {
+  if (employeesWithSalary.value.length === 0) {
+    return 0
+  }
+
+  return Math.max(...employeesWithSalary.value.map((employee) => employee.netSalary))
+})
+
+const averageSalary = computed(() => {
+  if (employeesWithSalary.value.length === 0) {
+    return 0
+  }
+
+  const total = employeesWithSalary.value.reduce((sum, employee) => sum + employee.netSalary, 0)
+
+  return total / employeesWithSalary.value.length
 })
 </script>
 
 <template>
   <main class="container">
     <header class="page-header">
-      <h1>Expense Tracker</h1>
+      <h1>Employee Salary Calculator</h1>
+
+      <p>Salary analysis using Vue computed properties</p>
     </header>
-    <ExpenseForm @submit="addExpense" />
-    <section class="summary-grid">
-      <div class="summary-card">
-        <span>Total Expenses</span>
 
-        <strong> ₹{{ totalExpense.toFixed(2) }} </strong>
-      </div>
+    <SalarySummary
+      :total-employees="employees.length"
+      :highest-salary="highestSalary"
+      :average-salary="averageSalary"
+    />
 
-      <div class="summary-card">
-        <span>Number of Expenses</span>
+    <section class="card">
+      <div class="filter-bar">
+        <label for="salary-filter"> Filter by net salary </label>
 
-        <strong>
-          {{ expenses.length }}
-        </strong>
-      </div>
-    </section>
-    <section class="category-section card">
-      <h2>Category Summary</h2>
+        <select id="salary-filter" v-model="salaryFilter">
+          <option value="all">All Employees</option>
 
-      <div v-if="Object.keys(categoryTotals).length === 0" class="empty-state">
-        No category data yet.
-      </div>
+          <option value="below50000">Below ₹50,000</option>
 
-      <div v-else class="category-grid">
-        <div v-for="(amount, category) in categoryTotals" :key="category" class="category-card">
-          <span>{{ category }}</span>
+          <option value="50000to75000">₹50,000 - ₹75,000</option>
 
-          <strong> ₹{{ amount.toFixed(2) }} </strong>
-        </div>
+          <option value="above75000">Above ₹75,000</option>
+        </select>
       </div>
     </section>
-    <ExpenseList :expenses="expenses" @delete="deleteExpense" />
+
+    <EmployeeList :employees="filteredEmployees" />
   </main>
 </template>
 
