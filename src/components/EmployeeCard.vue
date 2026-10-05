@@ -1,52 +1,16 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import SkillBadge from './SkillBadge.vue'
 import type { Employee } from '../types/employee'
 
-const props = defineProps<{
+defineProps<{
   employee: Employee
 }>()
-
-const employeeLevel = computed(() => {
-  const exp = props.employee.experience
-
-  if (exp >= 5) {
-    return { text: 'Senior Employee', class: 'senior' }
-  }
-
-  if (exp >= 3) {
-    return { text: 'Mid-Level Employee', class: 'mid' }
-  }
-
-  return { text: 'Junior Employee', class: 'junior' }
-})
 </script>
 
 <template>
-  <article class="card">
-    <h2>{{ employee.name }}</h2>
-
-    <p class="designation">
-      {{ employee.designation }}
-    </p>
-
+  <article class="employee-card">
+    <h3>{{ employee.name }}</h3>
+    <p>{{ employee.designation }}</p>
     <p>{{ employee.department }}</p>
-
-    <p>{{ employee.experience }} Years Experience</p>
-
-    <p class="level" :class="employeeLevel.class">
-      {{ employeeLevel.text }}
-    </p>
-
-    <span class="status" :class="employee.status ? 'active' : 'inactive'">
-      {{ employee.status ? 'Active' : 'Inactive' }}
-    </span>
-
-    <h4>Skills</h4>
-
-    <div class="skills">
-      <SkillBadge v-for="skill in employee.skills" :key="skill" :skill="skill" />
-    </div>
   </article>
 </template>
 
