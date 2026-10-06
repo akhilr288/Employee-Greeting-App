@@ -4,7 +4,7 @@ export interface Employee {
   designation: string
   department: string
   experience: number
-  status: boolean
+  status: 'active' | 'inactive'
   skills: string[]
   basicSalary: number
   hra: number
