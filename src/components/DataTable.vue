@@ -1,20 +1,15 @@
-<script setup lang="ts">
+<script setup lang="ts" generic="T extends { id: number }">
 import type { TableColumn } from '../types/table'
 
-interface TableRow {
-  id: number
-  [key: string]: unknown
-}
-
 const props = defineProps<{
-  columns: TableColumn<TableRow>[]
-  data: TableRow[]
+  columns: TableColumn<T>[]
+  data: T[]
 }>()
 
 const emit = defineEmits<{
-  edit: [row: TableRow]
-  delete: [row: TableRow]
-  'row-click': [row: TableRow]
+  edit: [row: T]
+  delete: [row: T]
+  'row-click': [row: T]
 }>()
 </script>
 
