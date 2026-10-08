@@ -60,3 +60,34 @@ export const employees: Employee[] = [
     tax: 10,
   },
 ]
+
+export const departmentOptions = [
+  { value: 'Engineering', label: 'Engineering' },
+  { value: 'Design', label: 'Design' },
+  { value: 'QA', label: 'QA' },
+  { value: 'HR', label: 'HR' },
+  { value: 'Marketing', label: 'Marketing' },
+]
+
+export const designationOptions = [
+  { value: 'Frontend Developer', label: 'Frontend Developer' },
+  { value: 'Backend Developer', label: 'Backend Developer' },
+  { value: 'UI/UX Designer', label: 'UI/UX Designer' },
+  { value: 'QA Engineer', label: 'QA Engineer' },
+  { value: 'Project Manager', label: 'Project Manager' },
+]
+
+export const availableSkills = [
+  'Vue',
+  'React',
+  'Angular',
+  'TypeScript',
+  'Laravel',
+  'Tailwind CSS',
+  'Figma',
+  'Adobe XD',
+  'Illustrator',
+  'Cypress',
+  'Vitest',
+  'Playwright',
+]

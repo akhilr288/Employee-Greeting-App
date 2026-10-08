@@ -1,14 +1,11 @@
 export interface Employee {
-  id: number
   name: string
-  designation: string
+  email: string
+  phone: string
+  gender: 'male' | 'female' | 'other' | ''
   department: string
-  experience: number
-  status: 'active' | 'inactive'
+  designation: string
   skills: string[]
-  basicSalary: number
-  hra: number
-  da: number
-  bonus: number
-  tax: number
+  experience: number
+  joiningDate: string
 }
