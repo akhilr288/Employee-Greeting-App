@@ -1,0 +1,12 @@
+import 'vue-router'
+import type { UserRole } from '../types/auth'
+
+declare module 'vue-router' {
+  interface RouteMeta {
+    requiresAuth?: boolean
+    roles?: UserRole[]
+    title?: string
+  }
+}
+
+export {}

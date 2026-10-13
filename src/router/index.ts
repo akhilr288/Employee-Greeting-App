@@ -1,55 +1,109 @@
 import { createRouter, createWebHistory } from 'vue-router'
-
-import PortalLayout from '@/layouts/PortalLayout.vue'
-import DashboardView from '@/views/DashboardView.vue'
-import EmployeesView from '@/views/EmployeesView.vue'
-import EmployeeDetailsView from '@/views/EmployeeDetailsView.vue'
-import ProfileView from '@/views/ProfileView.vue'
-import SettingsView from '@/views/SettingsView.vue'
-import NotFoundView from '@/views/NotFoundView.vue'
+import { useAuthStore } from '../stores/authStore'
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory(),
   routes: [
     {
+      path: '/login',
+      name: 'login',
+      component: () => import('../views/LoginView.vue'),
+      meta: { title: 'Login' },
+    },
+    {
+      path: '/forbidden',
+      name: 'forbidden',
+      component: () => import('../views/ForbiddenView.vue'),
+      meta: { title: 'Access denied' },
+    },
+    {
       path: '/',
-      component: PortalLayout,
+      component: () => import('../layouts/PortalLayout.vue'),
+      meta: { requiresAuth: true },
       children: [
         {
+          path: '',
+          redirect: '/dashboard',
+        },
+        {
           path: 'dashboard',
-          alias: '/',
-          name: 'Dashboard',
-          component: DashboardView,
+          name: 'dashboard',
+          component: () => import('../views/DashboardView.vue'),
+          meta: { title: 'Dashboard' },
         },
         {
           path: 'employees',
-          name: 'Employees',
-          component: EmployeesView,
+          name: 'employees',
+          component: () => import('../views/EmployeesView.vue'),
+          meta: {
+            roles: ['ADMIN', 'HR'],
+            title: 'Employees',
+          },
         },
         {
           path: 'employees/:id',
-          name: 'EmployeeDetails',
-          component: EmployeeDetailsView,
+          name: 'employee-details',
+          component: () => import('../views/EmployeeDetailsView.vue'),
           props: true,
+          meta: {
+            roles: ['ADMIN', 'HR'],
+            title: 'Employee details',
+          },
         },
         {
           path: 'profile',
-          name: 'Profile',
-          component: ProfileView,
+          name: 'profile',
+          component: () => import('../views/ProfileView.vue'),
+          meta: { title: 'My profile' },
         },
         {
           path: 'settings',
-          name: 'Settings',
-          component: SettingsView,
+          name: 'settings',
+          component: () => import('../views/SettingsView.vue'),
+          meta: {
+            roles: ['ADMIN'],
+            title: 'Settings',
+          },
         },
       ],
     },
     {
-      path: '/404',
-      name: 'NotFound',
-      component: NotFoundView,
+      path: '/:pathMatch(.*)*',
+      name: 'not-found',
+      component: () => import('../views/NotFoundView.vue'),
+      meta: { title: 'Page not found' },
     },
   ],
+})
+
+router.beforeEach((to) => {
+  const auth = useAuthStore()
+
+  // 1. Authentication check
+  if (to.meta.requiresAuth && !auth.isAuthenticated) {
+    return {
+      name: 'login',
+      query: { redirect: to.fullPath },
+    }
+  }
+
+  // 2. Authorization check
+  if (to.meta.roles && !auth.hasAnyRole(to.meta.roles)) {
+    if (!auth.isAuthenticated) {
+      return {
+        name: 'login',
+        query: { redirect: to.fullPath },
+      }
+    }
+
+    return { name: 'forbidden' }
+  }
+
+  return true
+})
+
+router.afterEach((to) => {
+  document.title = `${String(to.meta.title ?? 'Employee Portal')} | Employee Portal`
 })
 
 export default router
