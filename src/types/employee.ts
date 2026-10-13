@@ -1,4 +1,5 @@
 export interface Employee {
+  id: number
   name: string
   email: string
   phone: string
@@ -8,4 +9,5 @@ export interface Employee {
   skills: string[]
   experience: number
   joiningDate: string
+  status: 'active' | 'inactive'
 }
