@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import AppSidebar from '../components/AppSidebar.vue'
+//import AppSidebar from '../components/AppSidebar.vue'
 </script>
 
 <template>
   <div class="portal">
-    <AppSidebar />
+    <!-- <AppSidebar /> -->
+    <div></div>
 
     <main class="portal-content">
       <RouterView />
