@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { employeeService } from '../services/employeeService'
 import { getApiErrorMessage } from '../utils/apiError'
 import type { ApiEmployee, ApiEmployeePayload } from '../types/employee'
 
 const employees = ref<ApiEmployee[]>([])
+const searchTerm = ref('')
+const currentPage = ref(1)
+const pageSize = ref(5)
 const loading = ref(false)
 const saving = ref(false)
 const deletingId = ref<number | null>(null)
@@ -12,6 +15,44 @@ const error = ref('')
 const success = ref('')
 const formVisible = ref(false)
 const editingId = ref<number | null>(null)
+const companyFilter = ref('')
+const sortOrder = ref<'asc' | 'desc'>('asc')
+
+const companyOptions = computed(() =>
+  [...new Set(employees.value.map((employee) => employee.company.name))].sort((a, b) =>
+    a.localeCompare(b),
+  ),
+)
+const filteredEmployees = computed(() => {
+  const search = searchTerm.value.trim().toLocaleLowerCase()
+  return employees.value
+    .filter(
+      (employee) =>
+        employee.name.toLocaleLowerCase().includes(search) &&
+        (!companyFilter.value || employee.company.name === companyFilter.value),
+    )
+    .sort((a, b) => {
+      const result = a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+      return sortOrder.value === 'asc' ? result : -result
+    })
+})
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil(filteredEmployees.value.length / pageSize.value)),
+)
+const paginatedEmployees = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return filteredEmployees.value.slice(start, start + pageSize.value)
+})
+
+watch(searchTerm, () => {
+  currentPage.value = 1
+})
+
+watch(totalPages, (pages) => {
+  if (currentPage.value > pages) {
+    currentPage.value = pages
+  }
+})
 
 const emptyForm = (): ApiEmployeePayload => ({
   name: '',
@@ -184,13 +225,53 @@ onMounted(loadEmployees)
       <button type="button" @click="startCreate">Add employee</button>
     </header>
 
-    <p v-if="error" class="error" role="alert">
-      {{ error }}
-    </p>
+    <div v-if="error" class="api-error" role="alert">
+      <p>{{ error }}</p>
+      <button type="button" :disabled="loading" @click="loadEmployees">Retry</button>
+    </div>
 
     <p v-if="success" class="success" role="status">
       {{ success }}
     </p>
+
+    <div class="employee-list-controls">
+      <label>
+        Search by name
+        <input
+          v-model="searchTerm"
+          type="search"
+          placeholder="Search employees..."
+          aria-label="Search employees by name"
+        />
+      </label>
+
+      <label>
+        Employees per page
+        <select v-model.number="pageSize" aria-label="Employees per page">
+          <option :value="5">5</option>
+          <option :value="10">10</option>
+          <option :value="20">20</option>
+        </select>
+      </label>
+
+      <label>
+        Filter by company
+        <select v-model="companyFilter" aria-label="Filter by company">
+          <option value="">All companies</option>
+          <option v-for="company in companyOptions" :key="company" :value="company">
+            {{ company }}
+          </option>
+        </select>
+      </label>
+
+      <label>
+        Sort by name
+        <select v-model="sortOrder" aria-label="Sort by name">
+          <option value="asc">A to Z</option>
+          <option value="desc">Z to A</option>
+        </select>
+      </label>
+    </div>
 
     <form v-if="formVisible" class="employee-form" @submit.prevent="submitForm">
       <h2>{{ editingId === null ? 'Add employee' : 'Edit employee' }}</h2>
@@ -264,11 +345,18 @@ onMounted(loadEmployees)
       </div>
     </form>
 
-    <p v-if="loading">Loading employees...</p>
+    <div v-if="loading" class="api-loading" role="status" aria-live="polite">
+      <span class="loading-spinner" aria-hidden="true"></span>
+      <span>Loading employees...</span>
+    </div>
 
     <p v-else-if="!error && employees.length === 0">No employees found.</p>
 
-    <div v-else-if="employees.length > 0" class="table-wrapper">
+    <p v-else-if="!error && filteredEmployees.length === 0">
+      No employees match the current search and filters.
+    </p>
+
+    <div v-else-if="paginatedEmployees.length > 0" class="table-wrapper">
       <table>
         <thead>
           <tr>
@@ -283,7 +371,7 @@ onMounted(loadEmployees)
         </thead>
 
         <tbody>
-          <tr v-for="employee in employees" :key="employee.id">
+          <tr v-for="employee in paginatedEmployees" :key="employee.id">
             <td>{{ employee.name }}</td>
             <td>{{ employee.email }}</td>
             <td>{{ employee.username }}</td>
@@ -323,5 +411,38 @@ onMounted(loadEmployees)
         </tbody>
       </table>
     </div>
+
+    <nav
+      v-if="!loading && filteredEmployees.length > 0"
+      class="employee-pagination"
+      aria-label="Employee list pagination"
+    >
+      <span>
+        Showing {{ (currentPage - 1) * pageSize + 1 }}–{{
+          Math.min(currentPage * pageSize, filteredEmployees.length)
+        }}
+        of {{ filteredEmployees.length }}
+      </span>
+
+      <div>
+        <button
+          type="button"
+          :disabled="currentPage === 1"
+          aria-label="Previous page"
+          @click="currentPage--"
+        >
+          Previous
+        </button>
+        <span aria-current="page">Page {{ currentPage }} of {{ totalPages }}</span>
+        <button
+          type="button"
+          :disabled="currentPage === totalPages"
+          aria-label="Next page"
+          @click="currentPage++"
+        >
+          Next
+        </button>
+      </div>
+    </nav>
   </section>
 </template>

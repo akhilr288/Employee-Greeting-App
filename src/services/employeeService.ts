@@ -30,4 +30,28 @@ export const employeeService = {
   async delete(id: number): Promise<void> {
     await apiClient.delete(`/users/${id}`)
   },
+
+  getPaginated(params: EmployeeQuery) {
+    return apiClient.get<EmployeeListResponse>('/employees', {
+      params,
+    })
+  },
+}
+
+export interface EmployeePagination {
+  current_page: number
+  last_page: number
+  per_page: number
+  total: number
+}
+
+export interface EmployeeListResponse {
+  data: ApiEmployee[]
+  meta: EmployeePagination
+}
+
+export interface EmployeeQuery {
+  page: number
+  per_page: number
+  search?: string
 }
