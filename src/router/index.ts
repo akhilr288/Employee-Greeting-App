@@ -17,13 +17,19 @@ const router = createRouter({
       meta: { title: 'Access denied' },
     },
     {
+      path: '/shopping',
+      name: 'shopping',
+      component: () => import('../views/ShoppingView.vue'),
+      meta: { title: 'Shopping Store' },
+    },
+    {
       path: '/',
       component: () => import('../layouts/PortalLayout.vue'),
       meta: { requiresAuth: true },
       children: [
         {
           path: '',
-          redirect: '/dashboard',
+          redirect: '/shopping',
         },
         {
           path: 'dashboard',
