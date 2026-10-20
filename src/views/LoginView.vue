@@ -1,36 +1,112 @@
 <script setup lang="ts">
-import { useRoute, useRouter } from 'vue-router'
-import { useAuthStore } from '../stores/authStore'
-import type { UserRole } from '../types/auth'
+import { ref } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useAuthStore } from '@/stores/authStore'
+import { getApiErrorMessage } from '@/utils/apiError'
 
-const auth = useAuthStore()
-const route = useRoute()
+const authStore = useAuthStore()
 const router = useRouter()
+const route = useRoute()
 
-function loginAs(role: UserRole) {
-  auth.login(role)
+const email = ref('')
+const password = ref('')
+const errorMessage = ref('')
 
-  const requestedPath = route.query.redirect
-  const redirectTo =
-    typeof requestedPath === 'string' &&
-    requestedPath.startsWith('/') &&
-    !requestedPath.startsWith('//')
-      ? requestedPath
-      : '/dashboard'
+async function handleLogin() {
+  errorMessage.value = ''
 
-  void router.replace(redirectTo)
+  try {
+    await authStore.login({
+      email: email.value,
+      password: password.value,
+    })
+
+    const redirect = route.query.redirect
+
+    await router.replace(
+      typeof redirect === 'string' ? redirect : { name: 'dashboard' },
+    )
+  } catch (error: unknown) {
+    errorMessage.value = getApiErrorMessage(error)
+  }
 }
 </script>
 
 <template>
   <main class="login-page">
-    <h1>Employee Portal</h1>
-    <p>Select a demo role to test access control.</p>
+    <form class="login-card" @submit.prevent="handleLogin">
+      <h1>Employee Portal</h1>
+      <p>Sign in to continue.</p>
 
-    <button type="button" @click="loginAs('ADMIN')">Login as ADMIN</button>
+      <label for="email">Email</label>
+      <input id="email" v-model.trim="email" type="email" autocomplete="username" required />
 
-    <button type="button" @click="loginAs('HR')">Login as HR</button>
+      <label for="password">Password</label>
+      <input
+        id="password"
+        v-model="password"
+        type="password"
+        autocomplete="current-password"
+        required
+      />
 
-    <button type="button" @click="loginAs('EMPLOYEE')">Login as EMPLOYEE</button>
+      <p v-if="errorMessage" class="error" role="alert">
+        {{ errorMessage }}
+      </p>
+
+      <button type="submit" :disabled="authStore.loading">
+        {{ authStore.loading ? 'Signing in...' : 'Sign in' }}
+      </button>
+    </form>
   </main>
 </template>
+
+<style scoped>
+.login-page {
+  display: grid;
+  min-height: 80vh;
+  place-items: center;
+  padding: 24px;
+}
+
+.login-card {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+  max-width: 400px;
+  padding: 28px;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+}
+
+.login-card h1,
+.login-card p {
+  margin: 0;
+}
+
+.login-card label {
+  margin-top: 8px;
+}
+
+.login-card input,
+.login-card button {
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font: inherit;
+}
+
+.login-card button {
+  margin-top: 12px;
+  cursor: pointer;
+}
+
+.login-card button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.error {
+  color: #a22;
+}
+</style>

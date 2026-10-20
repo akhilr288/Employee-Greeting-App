@@ -1,91 +1,66 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { useAuthStore } from '../stores/authStore'
+import { useAuthStore } from '@/stores/authStore'
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
+      path: '/',
+      redirect: { name: 'login' },
+    },
+    {
       path: '/login',
       name: 'login',
-      component: () => import('../views/LoginView.vue'),
-      meta: { title: 'Login' },
+      component: () => import('@/views/LoginView.vue'),
+      meta: { guestOnly: true },
+    },
+    {
+      path: '/dashboard',
+      name: 'dashboard',
+      component: () => import('@/views/DashboardView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/employees',
+      name: 'employees',
+      component: () => import('@/views/EmployeesView.vue'),
+      meta: {
+        requiresAuth: true,
+        roles: ['ADMIN', 'HR'],
+      },
+    },
+    {
+      path: '/profile',
+      name: 'profile',
+      component: () => import('@/views/ProfileView.vue'),
+      meta: { requiresAuth: true },
     },
     {
       path: '/forbidden',
       name: 'forbidden',
-      component: () => import('../views/ForbiddenView.vue'),
-      meta: { title: 'Access denied' },
-    },
-    {
-      path: '/shopping',
-      name: 'shopping',
-      component: () => import('../views/ShoppingView.vue'),
-      meta: { title: 'Shopping Store' },
-    },
-    {
-      path: '/',
-      component: () => import('../layouts/PortalLayout.vue'),
-      meta: { requiresAuth: true },
-      children: [
-        {
-          path: '',
-          redirect: '/shopping',
-        },
-        {
-          path: 'dashboard',
-          name: 'dashboard',
-          component: () => import('../views/DashboardView.vue'),
-          meta: { title: 'Dashboard' },
-        },
-        {
-          path: 'employees',
-          name: 'employees',
-          component: () => import('../views/EmployeesView.vue'),
-          meta: {
-            roles: ['ADMIN', 'HR'],
-            title: 'Employees',
-          },
-        },
-        {
-          path: 'employees/:id',
-          name: 'employee-details',
-          component: () => import('../views/EmployeeDetailsView.vue'),
-          props: true,
-          meta: {
-            roles: ['ADMIN', 'HR'],
-            title: 'Employee details',
-          },
-        },
-        {
-          path: 'profile',
-          name: 'profile',
-          component: () => import('../views/ProfileView.vue'),
-          meta: { title: 'My profile' },
-        },
-        {
-          path: 'settings',
-          name: 'settings',
-          component: () => import('../views/SettingsView.vue'),
-          meta: {
-            roles: ['ADMIN'],
-            title: 'Settings',
-          },
-        },
-      ],
-    },
-    {
-      path: '/:pathMatch(.*)*',
-      name: 'not-found',
-      component: () => import('../views/NotFoundView.vue'),
-      meta: { title: 'Page not found' },
+      component: () => import('@/views/ForbiddenView.vue'),
     },
   ],
 })
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const auth = useAuthStore()
 
-  // 1. Authentication check
+  // Restore and validate the user after a page refresh.
+  if (auth.token && !auth.user) {
+    try {
+      await auth.fetchUser()
+    } catch {
+      // Do not enter a protected route when identity cannot be verified.
+      if (to.meta.requiresAuth) {
+        return {
+          name: 'login',
+          query: { redirect: to.fullPath },
+        }
+      }
+    }
+  }
+
   if (to.meta.requiresAuth && !auth.isAuthenticated) {
     return {
       name: 'login',
@@ -93,23 +68,13 @@ router.beforeEach((to) => {
     }
   }
 
-  // 2. Authorization check
-  if (to.meta.roles && !auth.hasAnyRole(to.meta.roles)) {
-    if (!auth.isAuthenticated) {
-      return {
-        name: 'login',
-        query: { redirect: to.fullPath },
-      }
-    }
-
-    return { name: 'forbidden' }
+  if (to.meta.guestOnly && auth.isAuthenticated) {
+    return { name: 'dashboard' }
   }
 
-  return true
-})
-
-router.afterEach((to) => {
-  document.title = `${String(to.meta.title ?? 'Employee Portal')} | Employee Portal`
+  if (to.meta.roles && (!auth.role || !to.meta.roles.includes(auth.role))) {
+    return { name: 'forbidden' }
+  }
 })
 
 export default router
