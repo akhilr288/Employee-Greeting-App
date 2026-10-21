@@ -118,9 +118,7 @@ export const useAuthStore = defineStore('auth', () => {
       // Ensure subsequent requests use the new token.
       apiClient.defaults.headers.common.Authorization = `Bearer ${result.access_token}`
 
-      user.value = payload.user
-        ? normalizeUser(payload.user, payload.role ?? result.role)
-        : null
+      user.value = payload.user ? normalizeUser(payload.user, payload.role ?? result.role) : null
 
       persistAuth()
 

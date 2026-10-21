@@ -16,7 +16,7 @@ function logout() {
     <h1>Dashboard</h1>
     <p>Welcome to your employee portal.</p>
 
-    <!-- <RouterLink to="/employees"> View employees </RouterLink> -->
+    <RouterLink to="/employees"> View employees </RouterLink>
     <button type="button" @click="logout">Logout</button>
   </section>
 </template>

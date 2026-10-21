@@ -1,22 +1,31 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { employeeService } from '../services/employeeService'
+import { useEmployee } from '../composables/useEmployee'
 import { getApiErrorMessage } from '../utils/apiError'
 import type { ApiEmployee, ApiEmployeePayload } from '../types/employee'
 
-const employees = ref<ApiEmployee[]>([])
+const {
+  employees,
+  loading,
+  error: employeeError,
+  fetchEmployees,
+  getEmployeeById,
+  addEmployee,
+  updateEmployee,
+  deleteEmployee: removeEmployee,
+} = useEmployee()
 const searchTerm = ref('')
 const currentPage = ref(1)
 const pageSize = ref(5)
-const loading = ref(false)
 const saving = ref(false)
 const deletingId = ref<number | null>(null)
-const error = ref('')
+const formError = ref('')
 const success = ref('')
 const formVisible = ref(false)
 const editingId = ref<number | null>(null)
 const companyFilter = ref('')
 const sortOrder = ref<'asc' | 'desc'>('asc')
+const error = computed(() => formError.value || employeeError.value || '')
 
 const companyOptions = computed(() =>
   [...new Set(employees.value.map((employee) => employee.company.name))].sort((a, b) =>
@@ -80,16 +89,8 @@ const emptyForm = (): ApiEmployeePayload => ({
 const form = reactive<ApiEmployeePayload>(emptyForm())
 
 async function loadEmployees() {
-  loading.value = true
-  error.value = ''
-
-  try {
-    employees.value = await employeeService.getAll()
-  } catch (err: unknown) {
-    error.value = getApiErrorMessage(err)
-  } finally {
-    loading.value = false
-  }
+  formError.value = ''
+  await fetchEmployees()
 }
 
 function resetForm() {
@@ -104,12 +105,12 @@ function startCreate() {
 }
 
 async function startEdit(id: number) {
-  error.value = ''
+  formError.value = ''
   success.value = ''
 
   try {
-    // Fetch the latest record from GET /employees/:id.
-    const employee = await employeeService.getById(id)
+    // Fetch the latest record before editing.
+    const employee = await getEmployeeById(id)
 
     Object.assign(form, {
       name: employee.name,
@@ -124,12 +125,12 @@ async function startEdit(id: number) {
     editingId.value = employee.id
     formVisible.value = true
   } catch (err: unknown) {
-    error.value = getApiErrorMessage(err)
+    formError.value = getApiErrorMessage(err)
   }
 }
 
 async function submitForm() {
-  error.value = ''
+  formError.value = ''
   success.value = ''
 
   if (
@@ -146,7 +147,7 @@ async function submitForm() {
     !form.company.catchPhrase.trim() ||
     !form.company.bs.trim()
   ) {
-    error.value = 'Complete all required fields with valid values.'
+    formError.value = 'Complete all required fields with valid values.'
     return
   }
 
@@ -175,17 +176,17 @@ async function submitForm() {
 
   try {
     if (editingId.value !== null) {
-      await employeeService.update(editingId.value, payload)
+      await updateEmployee(editingId.value, payload)
       success.value = 'Employee updated successfully.'
     } else {
-      await employeeService.create(payload)
+      await addEmployee(payload)
       success.value = 'Employee created successfully.'
     }
 
     resetForm()
     await loadEmployees()
   } catch (err: unknown) {
-    error.value = getApiErrorMessage(err)
+    formError.value = getApiErrorMessage(err)
   } finally {
     saving.value = false
   }
@@ -196,16 +197,15 @@ async function deleteEmployee(employee: ApiEmployee) {
 
   if (!confirmed) return
 
-  error.value = ''
+  formError.value = ''
   success.value = ''
   deletingId.value = employee.id
 
   try {
-    await employeeService.delete(employee.id)
-    employees.value = employees.value.filter((item) => item.id !== employee.id)
+    await removeEmployee(employee.id)
     success.value = 'Employee deleted successfully.'
   } catch (err: unknown) {
-    error.value = getApiErrorMessage(err)
+    formError.value = getApiErrorMessage(err)
   } finally {
     deletingId.value = null
   }

@@ -24,10 +24,16 @@ const router = createRouter({
       path: '/employees',
       name: 'employees',
       component: () => import('@/views/EmployeesView.vue'),
-      meta: {
-        requiresAuth: true,
-        roles: ['ADMIN', 'HR'],
-      },
+      // meta: {
+      //   requiresAuth: false,
+      //   roles: ['ADMIN', 'HR'],
+      // },
+    },
+    {
+      path: '/employees/:id',
+      name: 'employee-details',
+      component: () => import('@/views/EmployeeDetailsView.vue'),
+      props: true,
     },
     {
       path: '/profile',
@@ -39,6 +45,12 @@ const router = createRouter({
       path: '/forbidden',
       name: 'forbidden',
       component: () => import('@/views/ForbiddenView.vue'),
+    },
+    {
+      path: '/employee-management',
+      name: 'employee-management',
+      component: () => import('@/views/EmployeeManagementView.vue'),
+      meta: { requiresAuth: true },
     },
   ],
 })
