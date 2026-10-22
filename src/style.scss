@@ -22,16 +22,41 @@ $focus-shadow: rgb(37 99 235 / 10%);
    Base
 ========================= */
 
-:root {
-  font-family:
-    Inter,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
-  color: $text-color;
-  background: $bg-color;
+:root,
+:root[data-theme='light'] {
+  color-scheme: light;
+  --app-bg: #f5f7fa;
+  --surface-bg: #ffffff;
+  --text-color: #202938;
+  --muted-color: #586579;
+  --border-color: #d7dee8;
+  --button-bg: #2457c5;
+  --button-text: #ffffff;
+  --focus-color: #2457c5;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --app-bg: #151922;
+  --surface-bg: #222936;
+  --text-color: #f2f5fa;
+  --muted-color: #c0cada;
+  --border-color: #465164;
+  --button-bg: #8ab4ff;
+  --button-text: #111827;
+  --focus-color: #8ab4ff;
+}
+
+:root[data-theme='high-contrast'] {
+  color-scheme: dark;
+  --app-bg: #000000;
+  --surface-bg: #000000;
+  --text-color: #ffffff;
+  --muted-color: #ffffff;
+  --border-color: #ffffff;
+  --button-bg: #ffff00;
+  --button-text: #000000;
+  --focus-color: #00ffff;
 }
 
 * {
@@ -41,6 +66,37 @@ $focus-shadow: rgb(37 99 235 / 10%);
 body {
   margin: 0;
   min-width: 320px;
+}
+
+.app-shell {
+  min-height: 100vh;
+  padding: 32px;
+  background: var(--app-bg);
+  color: var(--text-color);
+  transition:
+    background-color 0.2s,
+    color 0.2s;
+}
+
+.app-header,
+.theme-switcher,
+.theme-preview {
+  max-width: 760px;
+  margin: 0 auto 24px;
+}
+
+.theme-switcher,
+.theme-preview {
+  padding: 24px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--surface-bg);
+}
+
+.theme-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 /* =========================
