@@ -57,8 +57,8 @@ watch(() => props.id, loadEmployee, { immediate: true })
       <p><strong>Email:</strong> {{ employee.email }}</p>
       <p>
         <strong>Address:</strong>
-        {{ employee.address.street }}, {{ employee.address.suite }},
-        {{ employee.address.city }} {{ employee.address.zipcode }}
+        {{ employee.address.street }}, {{ employee.address.suite }}, {{ employee.address.city }}
+        {{ employee.address.zipcode }}
       </p>
       <p><strong>Phone:</strong> {{ employee.phone }}</p>
       <p><strong>Website:</strong> {{ employee.website }}</p>

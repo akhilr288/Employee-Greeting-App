@@ -23,6 +23,7 @@ $focus-shadow: rgb(37 99 235 / 10%);
 ========================= */
 
 :root {
+  color-scheme: light;
   font-family:
     Inter,
     system-ui,
@@ -31,16 +32,59 @@ $focus-shadow: rgb(37 99 235 / 10%);
     'Segoe UI',
     sans-serif;
   color: $text-color;
-  background: $bg-color;
+  background: #f3f6fb;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 * {
   box-sizing: border-box;
 }
 
+html {
+  min-width: 320px;
+  min-height: 100%;
+}
+
 body {
   margin: 0;
   min-width: 320px;
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse at 10% 0%, rgb(219 234 254 / 55%), transparent 34rem), #f3f6fb;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+a,
+input,
+select {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid rgb(37 99 235 / 35%);
+  outline-offset: 2px;
+}
+
+a {
+  color: #2563eb;
+  text-decoration: none;
+
+  &:hover {
+    color: #1d4ed8;
+  }
 }
 
 /* =========================

@@ -62,9 +62,7 @@ export function useEmployee() {
 
     try {
       const employee = await employeeService.update(id, payload)
-      employees.value = employees.value.map((current) =>
-        current.id === id ? employee : current,
-      )
+      employees.value = employees.value.map((current) => (current.id === id ? employee : current))
       return employee
     } catch (err: unknown) {
       error.value = getApiErrorMessage(err)

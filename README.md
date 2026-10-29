@@ -71,3 +71,10 @@ npm run test:e2e -- --debug
 ```sh
 npm run lint
 ```
+
+### Format with [Prettier](https://prettier.io/)
+
+```sh
+npm run format:check
+npm run format
+```

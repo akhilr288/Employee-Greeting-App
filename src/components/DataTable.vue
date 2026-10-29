@@ -1,7 +1,7 @@
 <script setup lang="ts" generic="T extends { id: number }">
 import type { TableColumn } from '../types/table'
 
-const props = defineProps<{
+defineProps<{
   columns: TableColumn<T>[]
   data: T[]
 }>()
@@ -100,7 +100,9 @@ const emit = defineEmits<{
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.15s ease, opacity 0.2s ease;
+  transition:
+    transform 0.15s ease,
+    opacity 0.2s ease;
 }
 
 .actions button:hover {

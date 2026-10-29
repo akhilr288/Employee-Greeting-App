@@ -6,13 +6,13 @@ import { useEmployee } from './useEmployee'
 
 vi.mock('@/services/employeeService', () => ({
   employeeService: {
-    getAll: vi.fn(),
-    getById: vi.fn(),
-    create: vi.fn(),
-    update: vi.fn(),
-    delete: vi.fn(),
-    patch: vi.fn(),
-    getPaginated: vi.fn(),
+    getAll: vi.fn<typeof employeeService.getAll>(),
+    getById: vi.fn<typeof employeeService.getById>(),
+    create: vi.fn<typeof employeeService.create>(),
+    update: vi.fn<typeof employeeService.update>(),
+    delete: vi.fn<typeof employeeService.delete>(),
+    patch: vi.fn<typeof employeeService.patch>(),
+    getPaginated: vi.fn<typeof employeeService.getPaginated>(),
   },
 }))
 

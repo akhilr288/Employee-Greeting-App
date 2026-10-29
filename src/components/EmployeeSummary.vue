@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import ErrorState from '@/components/ErrorState.vue'
+import LoadingState from '@/components/LoadingState.vue'
 import { useEmployee } from '@/composables/useEmployee'
 
 const { employees, loading, error } = useEmployee()
@@ -14,8 +16,8 @@ const representedCompanies = computed(
   <section class="summary">
     <h2>Employee Summary</h2>
 
-    <p v-if="loading">Updating summary...</p>
-    <p v-else-if="error" class="error" role="alert">{{ error }}</p>
+    <LoadingState v-if="loading" message="Updating summary..." />
+    <ErrorState v-else-if="error" :message="error" />
 
     <div class="summary-grid">
       <article>
@@ -34,31 +36,56 @@ const representedCompanies = computed(
 <style scoped>
 .summary {
   margin-bottom: 24px;
+  padding: 24px;
+  border: 1px solid #e4eaf3;
+  border-radius: 18px;
+  background: rgb(255 255 255 / 90%);
+  box-shadow: 0 12px 32px rgb(15 23 42 / 5%);
 }
 
-.error {
-  color: #a22;
+.summary h2 {
+  margin: 0 0 18px;
+  color: #1e293b;
+  font-size: 1.1rem;
+  letter-spacing: -0.02em;
 }
 
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
 }
 
 .summary-grid article {
   display: grid;
   gap: 8px;
-  padding: 16px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  min-height: 104px;
+  align-content: center;
+  padding: 18px 20px;
+  border: 1px solid #e8eef7;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f8fbff, #f2f7ff);
 }
 
 .summary-grid span {
-  color: #666;
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 600;
 }
 
 .summary-grid strong {
-  font-size: 24px;
+  color: #1e40af;
+  font-size: 1.9rem;
+  letter-spacing: -0.04em;
+}
+
+@media (max-width: 540px) {
+  .summary {
+    padding: 18px;
+  }
+
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

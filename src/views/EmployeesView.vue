@@ -1,5 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import EmptyState from '@/components/EmptyState.vue'
+import ErrorState from '@/components/ErrorState.vue'
+import LoadingState from '@/components/LoadingState.vue'
+import PaginationControls from '@/components/PaginationControls.vue'
 import { useEmployee } from '../composables/useEmployee'
 import { getApiErrorMessage } from '../utils/apiError'
 import type { ApiEmployee, ApiEmployeePayload } from '../types/employee'
@@ -53,15 +57,16 @@ const paginatedEmployees = computed(() => {
   return filteredEmployees.value.slice(start, start + pageSize.value)
 })
 
-watch(searchTerm, () => {
-  currentPage.value = 1
-})
-
-watch(totalPages, (pages) => {
-  if (currentPage.value > pages) {
-    currentPage.value = pages
-  }
-})
+watch(
+  [searchTerm, companyFilter, pageSize, totalPages],
+  ([search, company, size, pages], [previousSearch, previousCompany, previousSize]) => {
+    if (search !== previousSearch || company !== previousCompany || size !== previousSize) {
+      currentPage.value = 1
+    } else if (currentPage.value > pages) {
+      currentPage.value = pages
+    }
+  },
+)
 
 const emptyForm = (): ApiEmployeePayload => ({
   name: '',
@@ -215,7 +220,7 @@ onMounted(loadEmployees)
 </script>
 
 <template>
-  <section>
+  <section class="employee-page">
     <header class="page-header">
       <div>
         <h1>Employees</h1>
@@ -225,10 +230,13 @@ onMounted(loadEmployees)
       <button type="button" @click="startCreate">Add employee</button>
     </header>
 
-    <div v-if="error" class="api-error" role="alert">
-      <p>{{ error }}</p>
-      <button type="button" :disabled="loading" @click="loadEmployees">Retry</button>
-    </div>
+    <ErrorState
+      v-if="error"
+      :message="error"
+      retry-label="Retry"
+      :disabled="loading"
+      @retry="loadEmployees"
+    />
 
     <p v-if="success" class="success" role="status">
       {{ success }}
@@ -345,16 +353,14 @@ onMounted(loadEmployees)
       </div>
     </form>
 
-    <div v-if="loading" class="api-loading" role="status" aria-live="polite">
-      <span class="loading-spinner" aria-hidden="true"></span>
-      <span>Loading employees...</span>
-    </div>
+    <LoadingState v-if="loading" message="Loading employees..." />
 
-    <p v-else-if="!error && employees.length === 0">No employees found.</p>
+    <EmptyState v-else-if="!error && employees.length === 0" message="No employees found." />
 
-    <p v-else-if="!error && filteredEmployees.length === 0">
-      No employees match the current search and filters.
-    </p>
+    <EmptyState
+      v-else-if="!error && filteredEmployees.length === 0"
+      message="No employees match the current search and filters."
+    />
 
     <div v-else-if="paginatedEmployees.length > 0" class="table-wrapper">
       <table>
@@ -412,37 +418,296 @@ onMounted(loadEmployees)
       </table>
     </div>
 
-    <nav
+    <PaginationControls
       v-if="!loading && filteredEmployees.length > 0"
-      class="employee-pagination"
-      aria-label="Employee list pagination"
-    >
-      <span>
-        Showing {{ (currentPage - 1) * pageSize + 1 }}–{{
-          Math.min(currentPage * pageSize, filteredEmployees.length)
-        }}
-        of {{ filteredEmployees.length }}
-      </span>
-
-      <div>
-        <button
-          type="button"
-          :disabled="currentPage === 1"
-          aria-label="Previous page"
-          @click="currentPage--"
-        >
-          Previous
-        </button>
-        <span aria-current="page">Page {{ currentPage }} of {{ totalPages }}</span>
-        <button
-          type="button"
-          :disabled="currentPage === totalPages"
-          aria-label="Next page"
-          @click="currentPage++"
-        >
-          Next
-        </button>
-      </div>
-    </nav>
+      v-model:current-page="currentPage"
+      :total-items="filteredEmployees.length"
+      :page-size="pageSize"
+      :total-pages="totalPages"
+      label="Employee list pagination"
+    />
   </section>
 </template>
+
+<style scoped>
+.employee-page {
+  width: min(1200px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 48px 0 64px;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.page-header h1 {
+  color: #172554;
+  font-size: clamp(2rem, 4vw, 2.65rem);
+  letter-spacing: -0.045em;
+}
+
+.page-header button,
+.form-actions button[type='submit'] {
+  border: 1px solid #1d4ed8;
+  border-radius: 10px;
+  padding: 11px 16px;
+  color: #fff;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  box-shadow: 0 7px 16px rgb(37 99 235 / 18%);
+}
+
+.page-header button:hover,
+.form-actions button[type='submit']:hover {
+  background: linear-gradient(135deg, #2563eb, #1e40af);
+}
+
+.employee-list-controls {
+  display: grid;
+  grid-template-columns: minmax(200px, 1.5fr) repeat(3, minmax(140px, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+  padding: 18px;
+  border: 1px solid #e4eaf3;
+  border-radius: 16px;
+  background: rgb(255 255 255 / 90%);
+  box-shadow: 0 8px 22px rgb(15 23 42 / 4%);
+}
+
+.employee-list-controls label,
+.employee-form label {
+  display: grid;
+  gap: 7px;
+  color: #475569;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.employee-list-controls input,
+.employee-list-controls select,
+.employee-form input {
+  min-width: 0;
+  width: 100%;
+  min-height: 42px;
+  padding: 9px 11px;
+  border: 1px solid #dbe3ee;
+  border-radius: 9px;
+  color: #1e293b;
+  background: #fff;
+  font-size: 0.9rem;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.employee-list-controls input:focus,
+.employee-list-controls select:focus,
+.employee-form input:focus {
+  border-color: #60a5fa;
+  outline: 0;
+  box-shadow: 0 0 0 3px rgb(59 130 246 / 13%);
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  border: 1px solid #e4eaf3;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 10px 28px rgb(15 23 42 / 5%);
+}
+
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  color: #334155;
+  font-size: 0.88rem;
+}
+
+th,
+td {
+  padding: 14px 15px;
+  border-bottom: 1px solid #edf1f7;
+  text-align: left;
+  vertical-align: middle;
+}
+
+th {
+  color: #64748b;
+  background: #f8fafc;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+tbody tr {
+  transition: background-color 140ms ease;
+}
+
+tbody tr:hover {
+  background: #f8fbff;
+}
+
+tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+td:last-child {
+  min-width: 180px;
+  white-space: nowrap;
+}
+
+td a,
+td button {
+  margin-right: 7px;
+}
+
+td button {
+  border: 1px solid #dbe4f0;
+  border-radius: 8px;
+  padding: 7px 10px;
+  color: #334155;
+  background: #fff;
+  font-size: 0.8rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+td button:hover:not(:disabled) {
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+  background: #eff6ff;
+}
+
+td button:last-child {
+  border-color: #fee2e2;
+  color: #b91c1c;
+}
+
+td button:last-child:hover:not(:disabled) {
+  border-color: #fecaca;
+  color: #991b1b;
+  background: #fef2f2;
+}
+
+.employee-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+  padding: 22px;
+  border: 1px solid #dbeafe;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #fff, #f8fbff);
+  box-shadow: 0 12px 28px rgb(15 23 42 / 5%);
+}
+
+.employee-form h2,
+.form-actions {
+  grid-column: 1 / -1;
+}
+
+.employee-form h2 {
+  margin: 0;
+  color: #1e293b;
+  font-size: 1.15rem;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.form-actions button[type='button'] {
+  border: 1px solid #dbe3ee;
+  border-radius: 10px;
+  padding: 10px 15px;
+  color: #475569;
+  background: #fff;
+  cursor: pointer;
+}
+
+.success {
+  padding: 12px 14px;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  color: #166534;
+  background: #f0fdf4;
+}
+
+.employee-page :deep(.empty-state),
+.employee-page :deep(.loading-state) {
+  padding: 28px 20px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 14px;
+  color: #64748b;
+  background: rgb(255 255 255 / 75%);
+  text-align: center;
+}
+
+.employee-page :deep(.error-state) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  color: #991b1b;
+  background: #fff7f7;
+}
+
+.employee-page :deep(.error-state p) {
+  margin: 0;
+}
+
+.employee-page :deep(.error-state button) {
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #991b1b;
+  background: #fff;
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .employee-list-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .employee-page {
+    width: min(100% - 32px, 1200px);
+    padding: 32px 0 48px;
+  }
+
+  .page-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .employee-list-controls,
+  .employee-form {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+
+  .employee-form h2,
+  .form-actions {
+    grid-column: auto;
+  }
+
+  .table-wrapper th,
+  .table-wrapper td {
+    padding: 12px;
+    white-space: nowrap;
+  }
+}
+</style>

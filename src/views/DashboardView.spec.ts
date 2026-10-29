@@ -4,7 +4,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAuthStore } from '@/stores/authStore'
 import DashboardView from '@/views/DashboardView.vue'
 
-const { replace } = vi.hoisted(() => ({ replace: vi.fn() }))
+const { replace } = vi.hoisted(() => ({
+  replace: vi.fn<(location: { name: string }) => void>(),
+}))
 
 vi.mock('vue-router', async (importOriginal) => {
   const actual = await importOriginal<typeof import('vue-router')>()
